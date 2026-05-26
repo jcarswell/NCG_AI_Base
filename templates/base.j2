@@ -1,0 +1,117 @@
+{% comment %}
+Base Jinja2 template for network switch configuration.
+This is the fallback template used when no manufacturer/OS/model specific templates exist.
+
+Template variables available:
+- name: Device name
+- ip_address: Management IP address
+- manufacturer: Device manufacturer (cisco, arista, juniper, etc.)
+- os: Operating system version
+- model: Device model
+- serial_number: Device serial number
+- hostname: Device hostname (from overrides)
+- config: Device-specific configuration
+- secrets: Device secrets (usernames, passwords, etc.)
+{% endcomment %}
+
+!
+! Generated configuration for {{ name }}
+! Device: {{ manufacturer }} {{ model }}
+! OS: {{ os }}
+! Serial Number: {{ serial_number }}
+! Generated: {{ ansible_date_time.iso8601 if ansible_date_time is defined else 'auto' }}
+!
+
+{% if hostname is defined %}
+hostname {{ hostname }}
+{% else %}
+hostname {{ name }}
+{% endif %}
+
+!
+! Management Interface
+!
+{% if management_ip is defined %}
+ip address {{ management_ip }} 255.255.255.0
+{% endif %}
+
+{% if management_vlan is defined %}
+interface Vlan{{ management_vlan }}
+ description Management
+{% if management_ip is defined %}
+ ip address {{ management_ip }} 255.255.255.0
+{% endif %}
+!
+{% endif %}
+
+!
+! SNMP Configuration
+!
+{% if snmp is defined and snmp.enabled %}
+snmp-server community {{ snmp.read_community | default('public') }} RO
+snmp-server community {{ snmp.write_community | default('private') }} RW
+{% if snmp.trap_destination is defined %}
+snmp-server trap-source {{ snmp.trap_destination }}
+{% endif %}
+{% endif %}
+
+!
+! VLAN Configuration
+!
+{% if vlans is defined %}
+{% for vlan in vlans %}
+vlan {{ vlan.id }}
+ name {{ vlan.name }}
+!
+{% endfor %}
+{% endif %}
+
+!
+! Interface Configuration
+!
+{% if interfaces is defined %}
+{% for interface in interfaces %}
+interface {{ interface.name }}
+ description {{ interface.description | default('') }}
+{% if interface.speed is defined %}
+ speed {{ interface.speed }}
+{% endif %}
+{% if interface.mtu is defined %}
+ mtu {{ interface.mtu }}
+{% endif %}
+{% if interface.enabled is defined and interface.enabled %}
+ no shutdown
+{% else %}
+ shutdown
+{% endif %}
+!
+{% endfor %}
+{% endif %}
+
+!
+! NTP Configuration
+!
+{% if ntp is defined and ntp.servers is defined %}
+{% for server in ntp.servers %}
+ntp server {{ server }}
+{% endfor %}
+{% endif %}
+
+!
+! Syslog Configuration
+!
+{% if syslog is defined and syslog.servers is defined %}
+{% for server in syslog.servers %}
+logging {{ server }}
+{% endfor %}
+{% if syslog.facility is defined %}
+logging facility {{ syslog.facility }}
+{% endif %}
+{% if syslog.severity is defined %}
+logging severity {{ syslog.severity }}
+{% endif %}
+{% endif %}
+
+!
+! End of configuration
+!
