@@ -1,0 +1,86 @@
+# Example device override file - YAML format
+# Place this file in the device-overrides directory with filename matching device name
+# e.g., switch-core-01.yaml
+
+# Device-specific configuration overrides
+# These will be merged with ServiceNow data and secrets
+
+# Hostname/Management settings
+hostname: switch-core-01.example.com
+management_ip: 192.168.1.1
+management_vlan: 100
+
+# Role and tier
+device_role: core_switch
+device_tier: 3
+
+# SNMP Configuration
+snmp:
+  enabled: true
+  version: 3
+  read_community: public-ro
+  write_community: private-rw
+  trap_destination: 10.0.0.100
+  trap_community: trap-community
+
+# Interface Configuration
+interfaces:
+  - name: Ethernet1/1
+    description: "Uplink to core"
+    speed: 100G
+    mtu: 9000
+    enabled: true
+  - name: Ethernet1/2
+    description: "Redundant uplink"
+    speed: 100G
+    mtu: 9000
+    enabled: true
+  - name: Port-Channel1
+    description: "Port channel to distribution"
+    members:
+      - Ethernet2/1
+      - Ethernet2/2
+    enabled: true
+
+# VLAN Configuration
+vlans:
+  - id: 1
+    name: default
+  - id: 100
+    name: management
+  - id: 200
+    name: production
+  - id: 300
+    name: backup
+
+# Routing
+routing:
+  bgp:
+    asn: 65001
+    neighbors:
+      - ip: 10.0.0.2
+        remote_asn: 65002
+        description: "Peer 1"
+      - ip: 10.0.0.3
+        remote_asn: 65003
+        description: "Peer 2"
+
+# NTP Configuration
+ntp:
+  servers:
+    - 10.0.0.254
+    - 10.0.0.253
+
+# Syslog Configuration
+syslog:
+  servers:
+    - 10.0.0.100
+  facility: local7
+  severity: informational
+
+# Custom features
+features:
+  spanning_tree: true
+  dhcp_snooping: true
+  arp_inspection: true
+  port_security: true
